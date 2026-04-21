@@ -9,6 +9,7 @@ package com.smartcampus.resource;
  * @author Hanaa Ajuward
  */
 
+
 import com.smartcampus.model.Sensor;
 import com.smartcampus.service.RoomService;
 import javax.ws.rs.*;
@@ -54,7 +55,6 @@ public class SensorResource {
                 .entity(created)
                 .build();
         } catch (IllegalArgumentException e) {
-            // Room not found
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity("{\"error\": \"" + e.getMessage() + "\"}")
                 .build();
@@ -74,5 +74,13 @@ public class SensorResource {
         }
         
         return Response.ok(sensor).build();
+    }
+    
+    // ========== SUB-RESOURCE LOCATOR (NEW for Part 4) ==========
+    // This method delegates to SensorReadingResource for nested paths
+    @Path("/{sensorId}/readings")
+    public SensorReadingResource getSensorReadingResource(@PathParam("sensorId") String sensorId) {
+        // Return a new instance of the sub-resource with the sensor ID
+        return new SensorReadingResource(sensorId);
     }
 }

@@ -12,25 +12,20 @@ package com.smartcampus.service;
 
 import com.smartcampus.model.Room;
 import com.smartcampus.model.Sensor;
+import com.smartcampus.model.SensorReading;
+import com.smartcampus.storage.DataStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class RoomService {
     
     private static RoomService instance;
-    private final ConcurrentHashMap<String, Room> rooms;
-    private final ConcurrentHashMap<String, Sensor> sensors;  // Sensor storage
+    private final DataStore dataStore;
     
     private RoomService() {
-        rooms = new ConcurrentHashMap<>();
-        sensors = new ConcurrentHashMap<>();  
-        
-        // Sample room
-        Room sample = new Room("LIB-301", "Library Quiet Study", 50);
-        rooms.put(sample.getId(), sample);
+        dataStore = DataStore.getInstance();
     }
     
     public static synchronized RoomService getInstance() {
@@ -42,43 +37,41 @@ public class RoomService {
     
     // ========== Room Methods ==========
     public List<Room> getAllRooms() {
-        return new ArrayList<>(rooms.values());
+        return new ArrayList<>(dataStore.getRooms().values());
     }
     
     public Room getRoom(String id) {
-        return rooms.get(id);
+        return dataStore.getRooms().get(id);
     }
     
     public Room createRoom(Room room) {
         if (room.getId() == null || room.getId().isEmpty()) {
             room.setId(UUID.randomUUID().toString());
         }
-        rooms.put(room.getId(), room);
+        dataStore.getRooms().put(room.getId(), room);
         return room;
     }
     
     public Room deleteRoom(String id) {
-        Room room = rooms.get(id);
+        Room room = dataStore.getRooms().get(id);
         if (room != null && !room.getSensorIds().isEmpty()) {
             throw new IllegalStateException("Room has active sensors: " + room.getSensorIds().size());
         }
-        return rooms.remove(id);
+        return dataStore.getRooms().remove(id);
     }
     
     public boolean roomExists(String id) {
-        return rooms.containsKey(id);
+        return dataStore.getRooms().containsKey(id);
     }
     
     public boolean hasActiveSensors(String roomId) {
-        Room room = rooms.get(roomId);
+        Room room = dataStore.getRooms().get(roomId);
         return room != null && !room.getSensorIds().isEmpty();
     }
     
     // ========== Sensor Methods ==========
-    
-    // Get all sensors (optionally filtered by type)
     public List<Sensor> getAllSensors(String typeFilter) {
-        List<Sensor> allSensors = new ArrayList<>(sensors.values());
+        List<Sensor> allSensors = new ArrayList<>(dataStore.getSensors().values());
         
         if (typeFilter != null && !typeFilter.isEmpty()) {
             return allSensors.stream()
@@ -88,12 +81,10 @@ public class RoomService {
         return allSensors;
     }
     
-    // Get sensor by ID
     public Sensor getSensor(String id) {
-        return sensors.get(id);
+        return dataStore.getSensors().get(id);
     }
     
-    // Create new sensor (with room validation)
     public Sensor createSensor(Sensor sensor) {
         // Validate room exists
         if (!roomExists(sensor.getRoomId())) {
@@ -111,33 +102,51 @@ public class RoomService {
         }
         
         // Store sensor
-        sensors.put(sensor.getId(), sensor);
+        dataStore.getSensors().put(sensor.getId(), sensor);
+        
+        // Initialize empty reading history
+        dataStore.getSensorReadings().putIfAbsent(sensor.getId(), new ArrayList<>());
         
         // Link sensor to room
-        Room room = rooms.get(sensor.getRoomId());
+        Room room = dataStore.getRooms().get(sensor.getRoomId());
         room.addSensorId(sensor.getId());
         
         return sensor;
     }
     
-    // Update sensor current value 
-    public Sensor updateSensorValue(String sensorId, double newValue) {
-        Sensor sensor = sensors.get(sensorId);
-        if (sensor != null) {
-            sensor.setCurrentValue(newValue);
-        }
-        return sensor;
-    }
-    
-    // Check if sensor exists
     public boolean sensorExists(String id) {
-        return sensors.containsKey(id);
+        return dataStore.getSensors().containsKey(id);
     }
     
-    // Get sensors by room ID
-    public List<Sensor> getSensorsByRoom(String roomId) {
-        return sensors.values().stream()
-            .filter(s -> s.getRoomId().equals(roomId))
-            .collect(Collectors.toList());
+    // ========== Sensor Reading Methods ==========
+    public List<SensorReading> getSensorReadings(String sensorId) {
+        return dataStore.getSensorReadings().getOrDefault(sensorId, new ArrayList<>());
+    }
+    
+    public SensorReading addSensorReading(String sensorId, SensorReading reading) {
+        // Check if sensor exists
+        if (!sensorExists(sensorId)) {
+            throw new IllegalArgumentException("Sensor not found: " + sensorId);
+        }
+        
+        // Generate ID if not provided
+        if (reading.getId() == null || reading.getId().isEmpty()) {
+            reading.setId(UUID.randomUUID().toString());
+        }
+        
+        // Set timestamp if not provided
+        if (reading.getTimestamp() == 0) {
+            reading.setTimestamp(System.currentTimeMillis());
+        }
+        
+        // Add reading to history
+        dataStore.getSensorReadings().putIfAbsent(sensorId, new ArrayList<>());
+        dataStore.getSensorReadings().get(sensorId).add(reading);
+        
+        // SIDE EFFECT: Update the sensor's currentValue
+        Sensor sensor = dataStore.getSensors().get(sensorId);
+        sensor.setCurrentValue(reading.getValue());
+        
+        return reading;
     }
 }
