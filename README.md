@@ -395,11 +395,220 @@
 
 
 
+**Part 4: Deep Nesting with Sub-Resources**
+
+
+
+**Overview**
+
+
+
+**The API supports historical tracking of sensor readings. Each sensor has its own reading history, accessible through nested sub-resources.**
+
+
+
+**Endpoints**
+
+**Method	Endpoint	Description**
+
+**GET	/api/v1/sensors/{sensorId}/readings	Get all readings for a specific sensor**
+
+**POST	/api/v1/sensors/{sensorId}/readings	Add a new reading for a specific sensor**
+
+**GET	/api/v1/sensors/{sensorId}/readings/{readingId}	Get a specific reading by ID**
+
+
+
+**Sub-Resource Locator Pattern**
+
+
+
+**In SensorResource.java, a sub-resource locator method delegates to SensorReadingResource:**
+
+
+
+**java**
+
+**@Path("/{sensorId}/readings")**
+
+**public SensorReadingResource getSensorReadingResource(@PathParam("sensorId") String sensorId) {**
+
+&#x20;   **return new SensorReadingResource(sensorId);**
+
+**}**
+
+
+
+
+
+**Sample curl commands**
+
+
+
+1. **GET all readings for a sensor (initially empty)
+
+bash
+curl -X GET http://localhost:8080/api/v1/sensors/SENSOR-CO2-001/readings**
+
+2. **POST a new reading (updates sensor's currentValue)
+
+bash
+curl -X POST http://localhost:8080/api/v1/sensors/SENSOR-CO2-001/readings \\
+  -H "Content-Type: application/json" \\
+  -d '{"value":430.5}**
+
+3. **POST another reading
+
+bash
+curl -X POST http://localhost:8080/api/v1/sensors/SENSOR-CO2-001/readings \\
+  -H "Content-Type: application/json" \\
+  -d '{"value":445.2}'**
+
+4. **GET all readings again (shows history)
+
+bash**
+
+&#x20;  **curl -X GET http://localhost:8080/api/v1/sensors/SENSOR-CO2-001/readings**
+
+
+
+**5. GET a specific reading by ID**
+
+
+
+&#x20;  **bash**
+
+&#x20;  **curl -X GET http://localhost:8080/api/v1/sensors/SENSOR-CO2-001/readings/{readingId}**
+
+
+
+**6. Verify sensor's currentValue was updated (Side Effect)**
+
+
+
+&#x20;  **bash**
+
+&#x20;  **curl -X GET http://localhost:8080/api/v1/sensors/SENSOR-CO2-001**
+
+
+
+**7. Try to get readings for non-existent sensor (404 error)**
+
+
+
+&#x20;  **bash**
+
+&#x20;  **curl -X GET http://localhost:8080/api/v1/sensors/INVALID-SENSOR/readings**
+
+
+
+
+
+**Sample Responses**
+
+
+
+**GET /sensors/{sensorId}/readings (200 OK):**
+
+
+
+**json**
+
+**\[**
+
+&#x20; **{**
+
+&#x20;   **"id": "reading-uuid-001",**
+
+&#x20;   **"timestamp": 1734567890123,**
+
+&#x20;   **"value": 430.5**
+
+&#x20; **},**
+
+&#x20; **{**
+
+&#x20;   **"id": "reading-uuid-002",**
+
+&#x20;   **"timestamp": 1734567890456,**
+
+&#x20;   **"value": 445.2**
+
+&#x20; **}**
+
+**]**
+
+
+
+
+
+**POST /sensors/{sensorId}/readings (201 Created):**
+
+
+
+**json**
+
+**{**
+
+&#x20; **"id": "reading-uuid-003",**
+
+&#x20; **"timestamp": 1734567890789,**
+
+&#x20; **"value": 430.5**
+
+**}**
+
+
+
+
+
+**GET /sensors/{sensorId} after readings (200 OK) - Side Effect:**
+
+
+
+**json**
+
+**{**
+
+&#x20; **"id": "SENSOR-CO2-001",**
+
+&#x20; **"type": "CO2",**
+
+&#x20; **"status": "ACTIVE",**
+
+&#x20; **"currentValue": 445.2,**
+
+&#x20; **"roomId": "LIB-301"**
+
+**}**
+
+
+
+
+
+**GET readings for non-existent sensor (404 Not Found):**
+
+
+
+**json**
+
+**{**
+
+&#x20; **"error": "Sensor not found with id: INVALID-SENSOR"**
+
+**}**
+
+
+
+
+
+
+
 **Project Structure**
 
 **SmartCampusAPI/**
 
-**├── src/main/java/com/smartcampus/**
+**├── com.smartcampus/**
 
 **│   ├── ApplicationConfig.java**
 
@@ -407,7 +616,9 @@
 
 **│   │   ├── Room.java**
 
-**│   │   └── Sensor.java**
+**│   │   ├── Sensor.java**
+
+**│   │   └── SensorReading.java**
 
 **│   ├── resource/**
 
@@ -415,15 +626,21 @@
 
 **│   │   ├── RoomResource.java**
 
-**│   │   └── SensorResource.java**
+**│   │   ├── SensorResource.java**
 
-**│   └── service/**
+**│   │   └── SensorReadingResource.java**
 
-**│       └── RoomService.java**
+**│   ├── service/**
+
+**│   │   └── RoomService.java**
+
+**│   └── storage/**
+
+**│       └── DataStore.java**      
 
 **├── pom.xml**
 
-**└── README.md**
+**└── nb-configuration.xml**
 
 
 
