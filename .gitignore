@@ -1,0 +1,19 @@
+# Compiled files
+target/
+*.class
+
+# IDE files
+.idea/
+*.iml
+.settings/
+.classpath
+.project
+.nbproject/
+nb-configuration.xml
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
