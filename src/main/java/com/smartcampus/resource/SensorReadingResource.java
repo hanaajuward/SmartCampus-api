@@ -23,17 +23,21 @@ import java.util.List;
 public class SensorReadingResource {
     
     private final RoomService roomService = RoomService.getInstance();
-    private final String sensorId;
+    private String sensorId;  // REMOVED 'final' keyword
+    
+    // NO-ARGUMENT CONSTRUCTOR (REQUIRED for JAX-RS)
+    public SensorReadingResource() {
+        // Default constructor
+    }
     
     // Constructor receives the sensor ID from the parent resource
     public SensorReadingResource(String sensorId) {
         this.sensorId = sensorId;
     }
     
-    // GET /api/v1/sensors/{sensorId}/readings - Get all readings for this sensor
+    // GET /api/v1/sensors/{sensorId}/readings
     @GET
     public Response getAllReadings() {
-        // Check if sensor exists
         if (!roomService.sensorExists(sensorId)) {
             return Response.status(Response.Status.NOT_FOUND)
                 .entity("{\"error\": \"Sensor not found with id: " + sensorId + "\"}")
@@ -44,28 +48,22 @@ public class SensorReadingResource {
         return Response.ok(readings).build();
     }
     
-    // POST /api/v1/sensors/{sensorId}/readings - Add a new reading for this sensor
+    // POST /api/v1/sensors/{sensorId}/readings
     @POST
     public Response addReading(SensorReading reading) {
-        // Check if sensor exists
         if (!roomService.sensorExists(sensorId)) {
             return Response.status(Response.Status.NOT_FOUND)
                 .entity("{\"error\": \"Sensor not found with id: " + sensorId + "\"}")
                 .build();
         }
         
-        // Validate reading value
-        if (reading.getValue() <= 0 && reading.getValue() != 0) {
-            // Allow 0 but not negative
-            if (reading.getValue() < 0) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"Reading value cannot be negative\"}")
-                    .build();
-            }
+        if (reading.getValue() < 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\": \"Reading value cannot be negative\"}")
+                .build();
         }
         
         try {
-            // Add reading (this also updates sensor's currentValue)
             SensorReading created = roomService.addSensorReading(sensorId, reading);
             
             return Response
@@ -79,11 +77,10 @@ public class SensorReadingResource {
         }
     }
     
-    // GET /api/v1/sensors/{sensorId}/readings/{readingId} - Get specific reading
+    // GET /api/v1/sensors/{sensorId}/readings/{readingId}
     @GET
     @Path("/{readingId}")
     public Response getReadingById(@PathParam("readingId") String readingId) {
-        // Check if sensor exists
         if (!roomService.sensorExists(sensorId)) {
             return Response.status(Response.Status.NOT_FOUND)
                 .entity("{\"error\": \"Sensor not found with id: " + sensorId + "\"}")

@@ -602,15 +602,173 @@ bash**
 
 
 
+**Part 5: Advanced Error Handling \& Logging**
+
+**Custom Exception Mappers**
+
+**Exception	HTTP Status	When it occurs**
+
+**RoomNotEmptyException	409 Conflict	Deleting room with active sensors**
+
+**LinkedResourceNotFoundException	422 Unprocessable Entity	POST sensor with invalid roomId**
+
+**SensorUnavailableException	403 Forbidden	POST reading to sensor in MAINTENANCE/OFFLINE**
+
+**GlobalExceptionMapper	500 Internal Server Error	Any unexpected runtime error**
+
+**Sample Error Responses**
+
+**409 Conflict - Delete room with sensors:**
+
+
+
+**json**
+
+**{**
+
+&#x20; **"error": "Cannot delete room: active sensors still assigned"**
+
+**}**
+
+**422 Unprocessable Entity - Invalid roomId:**
+
+
+
+**json**
+
+**{**
+
+&#x20; **"error": "Unprocessable Entity",**
+
+&#x20; **"message": "Room not found with id: INVALID-ROOM",**
+
+&#x20; **"resourceType": "Room",**
+
+&#x20; **"resourceId": "INVALID-ROOM"**
+
+**}**
+
+**403 Forbidden - Sensor in MAINTENANCE:**
+
+
+
+**json**
+
+**{**
+
+&#x20; **"error": "Forbidden",**
+
+&#x20; **"message": "Sensor SENSOR-CO2-003 is currently in MAINTENANCE status and cannot accept new readings",**
+
+&#x20; **"sensorId": "SENSOR-CO2-003",**
+
+&#x20; **"currentStatus": "MAINTENANCE"**
+
+**}**
+
+**500 Internal Server Error (no stack trace exposed):**
+
+
+
+**json**
+
+**{**
+
+&#x20; **"error": "Internal Server Error",**
+
+&#x20; **"message": "An unexpected error occurred. Please try again later."**
+
+**}**
+
+**Logging Filter**
+
+**A LoggingFilter implements both ContainerRequestFilter and ContainerResponseFilter to log all requests and responses:**
+
+
+
+**text**
+
+**INFO: → REQUEST: GET http://localhost:8080/api/v1/rooms**
+
+**INFO: ← RESPONSE: GET http://localhost:8080/api/v1/rooms - Status: 200**
+
+**INFO: → REQUEST: POST http://localhost:8080/api/v1/sensors**
+
+**INFO: ← RESPONSE: POST http://localhost:8080/api/v1/sensors - Status: 201**
+
+**Sample curl Commands for Error Testing**
+
+**1. Delete room with sensors (409 Conflict)**
+
+
+
+**bash**
+
+**curl -X DELETE http://localhost:8080/api/v1/rooms/LIB-301**
+
+**2. Create sensor with invalid roomId (422 Unprocessable Entity)**
+
+
+
+**bash**
+
+**curl -X POST http://localhost:8080/api/v1/sensors \\**
+
+&#x20; **-H "Content-Type: application/json" \\**
+
+&#x20; **-d '{"type":"CO2","status":"ACTIVE","currentValue":100,"roomId":"INVALID-ROOM"}'**
+
+**3. Add reading to MAINTENANCE sensor (403 Forbidden)**
+
+
+
+**bash**
+
+**curl -X POST http://localhost:8080/api/v1/sensors/SENSOR-CO2-003/readings \\**
+
+&#x20; **-H "Content-Type: application/json" \\**
+
+&#x20; **-d '{"value":100}'**
+
+**4. Get non-existent sensor (404 Not Found)**
+
+
+
+**bash**
+
+**curl -X GET http://localhost:8080/api/v1/sensors/FAKE-SENSOR/readings**
+
 
 
 **Project Structure**
 
 **SmartCampusAPI/**
 
-**├── com.smartcampus/**
+**├── src/main/java/com/smartcampus/**
 
 **│   ├── ApplicationConfig.java**
+
+**│   ├── exception/**
+
+**│   │   ├── LinkedResourceNotFoundException.java**
+
+**│   │   ├── RoomNotEmptyException.java**
+
+**│   │   └── SensorUnavailableException.java**
+
+**│   ├── filter/**
+
+**│   │   └── LoggingFilter.java**
+
+**│   ├── mapper/**
+
+**│   │   ├── GlobalExceptionMapper.java**
+
+**│   │   ├── LinkedResourceNotFoundExceptionMapper.java**
+
+**│   │   ├── RoomNotEmptyExceptionMapper.java**
+
+**│   │   └── SensorUnavailableExceptionMapper.java**
 
 **│   ├── model/**
 
@@ -636,11 +794,41 @@ bash**
 
 **│   └── storage/**
 
-**│       └── DataStore.java**      
+**│       └── DataStore.java**
 
 **├── pom.xml**
 
-**└── nb-configuration.xml**
+**└── README.md**
+
+
+
+
+
+
+
+**Data Storage (Sample Data)**
+
+**The API comes with pre-loaded sample data:**
+
+
+
+**Room ID	Name	Capacity**
+
+**LIB-301	Library Quiet Study	50**
+
+**CS-101	Computer Science Lab	35**
+
+**ENG-202	Engineering Workshop	40**
+
+**Sensor ID	Type	Status	Room**
+
+**SENSOR-CO2-001	CO2	ACTIVE	LIB-301**
+
+**SENSOR-TEMP-001	Temperature	ACTIVE	LIB-301**
+
+**SENSOR-CO2-003	CO2	MAINTENANCE	ENG-202**
+
+
 
 
 

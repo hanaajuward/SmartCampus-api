@@ -34,22 +34,27 @@ public class DataStore {
         // Rooms
         Room room1 = new Room("LIB-301", "Library Quiet Study", 50);
         Room room2 = new Room("CS-101", "Computer Science Lab", 35);
+        Room room3 = new Room("ENG-202", "Engineering Workshop", 40);
         room1.addSensorId("SENSOR-CO2-001");
         room1.addSensorId("SENSOR-TEMP-001");
         
         rooms.put("LIB-301", room1);
         rooms.put("CS-101", room2);
+        rooms.put("ENG-202", room3);
         
         // Sensors
         Sensor sensor1 = new Sensor("SENSOR-CO2-001", "CO2", "ACTIVE", 420.5, "LIB-301");
         Sensor sensor2 = new Sensor("SENSOR-TEMP-001", "Temperature", "ACTIVE", 22.5, "LIB-301");
-        
+        Sensor sensor3 = new Sensor("SENSOR-CO2-003", "CO2", "MAINTENANCE", 0, "ENG-202");
+
         sensors.put("SENSOR-CO2-001", sensor1);
         sensors.put("SENSOR-TEMP-001", sensor2);
+        sensors.put("SENSOR-CO2-003", sensor3);
         
         // Empty reading lists for sensors
         sensorReadings.put("SENSOR-CO2-001", new ArrayList<>());
         sensorReadings.put("SENSOR-TEMP-001", new ArrayList<>());
+        sensorReadings.put("SENSOR-CO2-003", new ArrayList<>());
     }
 
     public static DataStore getInstance() {

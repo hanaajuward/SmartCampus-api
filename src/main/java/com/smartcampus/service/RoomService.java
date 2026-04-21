@@ -14,6 +14,9 @@ import com.smartcampus.model.Room;
 import com.smartcampus.model.Sensor;
 import com.smartcampus.model.SensorReading;
 import com.smartcampus.storage.DataStore;
+import com.smartcampus.exception.RoomNotEmptyException;
+import com.smartcampus.exception.LinkedResourceNotFoundException;
+import com.smartcampus.exception.SensorUnavailableException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -55,7 +58,8 @@ public class RoomService {
     public Room deleteRoom(String id) {
         Room room = dataStore.getRooms().get(id);
         if (room != null && !room.getSensorIds().isEmpty()) {
-            throw new IllegalStateException("Room has active sensors: " + room.getSensorIds().size());
+            // Throw custom exception for 409 Conflict
+            throw new RoomNotEmptyException(id, room.getSensorIds().size());
         }
         return dataStore.getRooms().remove(id);
     }
@@ -86,9 +90,9 @@ public class RoomService {
     }
     
     public Sensor createSensor(Sensor sensor) {
-        // Validate room exists
+        // Validate room exists - throws LinkedResourceNotFoundException if not found
         if (!roomExists(sensor.getRoomId())) {
-            throw new IllegalArgumentException("Room not found: " + sensor.getRoomId());
+            throw new LinkedResourceNotFoundException("Room", sensor.getRoomId());
         }
         
         // Generate ID if not provided
@@ -104,7 +108,7 @@ public class RoomService {
         // Store sensor
         dataStore.getSensors().put(sensor.getId(), sensor);
         
-        // Initialize empty reading history
+        // Initialize empty reading history for this sensor
         dataStore.getSensorReadings().putIfAbsent(sensor.getId(), new ArrayList<>());
         
         // Link sensor to room
@@ -118,15 +122,27 @@ public class RoomService {
         return dataStore.getSensors().containsKey(id);
     }
     
+    public List<Sensor> getSensorsByRoom(String roomId) {
+        return dataStore.getSensors().values().stream()
+            .filter(s -> s.getRoomId().equals(roomId))
+            .collect(Collectors.toList());
+    }
+    
     // ========== Sensor Reading Methods ==========
     public List<SensorReading> getSensorReadings(String sensorId) {
         return dataStore.getSensorReadings().getOrDefault(sensorId, new ArrayList<>());
     }
     
     public SensorReading addSensorReading(String sensorId, SensorReading reading) {
-        // Check if sensor exists
+        // Check if sensor exists - throws LinkedResourceNotFoundException if not found
         if (!sensorExists(sensorId)) {
-            throw new IllegalArgumentException("Sensor not found: " + sensorId);
+            throw new LinkedResourceNotFoundException("Sensor", sensorId);
+        }
+        
+        // Check sensor status - if MAINTENANCE or OFFLINE, throw SensorUnavailableException
+        Sensor sensor = dataStore.getSensors().get(sensorId);
+        if ("MAINTENANCE".equals(sensor.getStatus()) || "OFFLINE".equals(sensor.getStatus())) {
+            throw new SensorUnavailableException(sensorId, sensor.getStatus());
         }
         
         // Generate ID if not provided
@@ -144,7 +160,6 @@ public class RoomService {
         dataStore.getSensorReadings().get(sensorId).add(reading);
         
         // SIDE EFFECT: Update the sensor's currentValue
-        Sensor sensor = dataStore.getSensors().get(sensorId);
         sensor.setCurrentValue(reading.getValue());
         
         return reading;

@@ -26,6 +26,15 @@ public class ApplicationConfig extends Application {
         resources.add(com.smartcampus.resource.RoomResource.class);  
         resources.add(com.smartcampus.resource.SensorResource.class);
         
+        // Exception Mappers
+        resources.add(com.smartcampus.mapper.RoomNotEmptyExceptionMapper.class);
+        resources.add(com.smartcampus.mapper.LinkedResourceNotFoundExceptionMapper.class);
+        resources.add(com.smartcampus.mapper.SensorUnavailableExceptionMapper.class);
+        resources.add(com.smartcampus.mapper.GlobalExceptionMapper.class);
+        
+        // Logging Filter
+        resources.add(com.smartcampus.filter.LoggingFilter.class);
+        
         return resources;
     }
 }
