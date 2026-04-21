@@ -10,7 +10,6 @@ package com.smartcampus;
  */
 
 
-
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
@@ -24,7 +23,8 @@ public class ApplicationConfig extends Application {
         Set<Class<?>> resources = new HashSet<>();
         
         resources.add(com.smartcampus.resource.DiscoveryResource.class);
-        resources.add(com.smartcampus.resource.RoomResource.class);  // ADD THIS
+        resources.add(com.smartcampus.resource.RoomResource.class);  
+        resources.add(com.smartcampus.resource.SensorResource.class);
         
         return resources;
     }

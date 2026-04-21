@@ -42,7 +42,7 @@
 
 **4. Start Tomcat: Run `startup.bat` (Windows) or `startup.sh` (Mac/Linux) from Tomcat's `bin/` folder**
 
-**5. Verify API is running at: http://localhost:8080/SmartCampusAPI-1.0-SNAPSHOT/api/v1/**
+**5. Verify API is running at: http://localhost:8080/api/v1/**
 
 
 
@@ -60,7 +60,7 @@
 
 **```bash**
 
-**curl -X GET http://localhost:8080/SmartCampusAPI-1.0-SNAPSHOT/api/v1**
+**curl -X GET http://localhost:8080/api/v1**
 
 
 
@@ -116,7 +116,7 @@
 
 **bash**
 
-**curl -X GET http://localhost:8080/SmartCampusAPI-1.0-SNAPSHOT/api/v1/rooms**
+**curl -X GET http://localhost:8080/api/v1/rooms**
 
 
 
@@ -126,7 +126,7 @@
 
 **bash**
 
-**curl -X GET http://localhost:8080/SmartCampusAPI-1.0-SNAPSHOT/api/v1/rooms/LIB-301**
+**curl -X GET http://localhost:8080/api/v1/rooms/LIB-301**
 
 
 
@@ -136,11 +136,11 @@
 
 **bash**
 
-**curl -X POST http://localhost:8080/SmartCampusAPI-1.0-SNAPSHOT/api/v1/rooms \\**
+**curl -X POST http://localhost:8080/api/v1/rooms \\**
 
 &#x20; **-H "Content-Type: application/json" \\**
 
-&#x20; **-d '{"name":"CS Lab","capacity":35}'**
+&#x20; **-d '{"name":"CS Computer Lab","capacity":35}'**
 
 
 
@@ -150,7 +150,7 @@
 
 **bash**
 
-**curl -X DELETE http://localhost:8080/SmartCampusAPI-1.0-SNAPSHOT/api/v1/rooms/{id}**
+**curl -X DELETE http://localhost:8080/api/v1/rooms/{id}**
 
 
 
@@ -160,7 +160,11 @@
 
 **bash**
 
-**curl -X GET http://localhost:8080/SmartCampusAPI-1.0-SNAPSHOT/api/v1/**
+**curl -X GET http://localhost:8080/api/v1/**
+
+
+
+
 
 **Sample Responses**
 
@@ -225,4 +229,213 @@
 
 
 
+**Part 3: Sensor Operations and Linking**
+
+
+
+**Endpoints**
+
+**Method	Endpoint	Description**
+
+**GET	/api/v1/sensors	List all sensors (optionally filtered by type)**
+
+**POST	/api/v1/sensors	Create a new sensor (validates roomId exists)**
+
+**GET	/api/v1/sensors/{sensorId}	Get sensor by ID**
+
+
+
+**Sample curl Commands**
+
+**1. GET all sensors**
+
+**bash**
+
+**curl -X GET http://localhost:8080/api/v1/sensors**
+
+
+
+**2. GET sensors filtered by type**
+
+**bash**
+
+**curl -X GET "http://localhost:8080/api/v1/sensors?type=CO2"**
+
+
+
+**3. POST create new sensor (with valid roomId)**
+
+**bash**
+
+**curl -X POST http://localhost:8080/api/v1/sensors \\**
+
+&#x20; **-H "Content-Type: application/json" \\**
+
+&#x20; **-d '{"type":"CO2","status":"ACTIVE","currentValue":420.5,"roomId":"LIB-301"}'**
+
+
+
+**4. GET sensor by ID**
+
+**bash**
+
+**curl -X GET http://localhost:8080/api/v1/sensors/{sensorId}**
+
+
+
+**5. POST with invalid roomId (should fail)**
+
+**bash**
+
+**curl -X POST http://localhost:8080/api/v1/sensors \\**
+
+&#x20; **-H "Content-Type: application/json" \\**
+
+&#x20; **-d '{"type":"CO2","status":"ACTIVE","currentValue":100,"roomId":"INVALID-ROOM"}'**
+
+
+
+**Sample Responses**
+
+
+
+**GET /sensors (200 OK):**
+
+**json**
+
+**\[**
+
+&#x20; **{**
+
+&#x20;   **"id": "sensor-001",**
+
+&#x20;   **"type": "CO2",**
+
+&#x20;   **"status": "ACTIVE",**
+
+&#x20;   **"currentValue": 420.5,**
+
+&#x20;   **"roomId": "LIB-301"**
+
+&#x20; **},**
+
+&#x20; **{**
+
+&#x20;   **"id": "sensor-002",**
+
+&#x20;   **"type": "Temperature",**
+
+&#x20;   **"status": "ACTIVE",**
+
+&#x20;   **"currentValue": 22.5,**
+
+&#x20;   **"roomId": "LIB-301"**
+
+&#x20; **}**
+
+**]**
+
+
+
+**GET /sensors?type=CO2 (200 OK):**
+
+**json**
+
+**\[**
+
+&#x20; **{**
+
+&#x20;   **"id": "sensor-001",**
+
+&#x20;   **"type": "CO2",**
+
+&#x20;   **"status": "ACTIVE",**
+
+&#x20;   **"currentValue": 420.5,**
+
+&#x20;   **"roomId": "LIB-301"**
+
+&#x20; **}**
+
+**]**
+
+
+
+**POST /sensors (201 Created):**
+
+**json**
+
+**{**
+
+&#x20; **"id": "sensor-003",**
+
+&#x20; **"type": "CO2",**
+
+&#x20; **"status": "ACTIVE",**
+
+&#x20; **"currentValue": 420.5,**
+
+&#x20; **"roomId": "LIB-301"**
+
+**}**
+
+
+
+**POST with invalid roomId (400 Bad Request):**
+
+**json**
+
+**{**
+
+&#x20; **"error": "Room not found: INVALID-ROOM"**
+
+**}**
+
+
+
+
+
+**Project Structure**
+
+**SmartCampusAPI/**
+
+**├── src/main/java/com/smartcampus/**
+
+**│   ├── ApplicationConfig.java**
+
+**│   ├── model/**
+
+**│   │   ├── Room.java**
+
+**│   │   └── Sensor.java**
+
+**│   ├── resource/**
+
+**│   │   ├── DiscoveryResource.java**
+
+**│   │   ├── RoomResource.java**
+
+**│   │   └── SensorResource.java**
+
+**│   └── service/**
+
+**│       └── RoomService.java**
+
+**├── pom.xml**
+
+**└── README.md**
+
+
+
+
+
+**Author**
+
+**Hanaa Ajuward**
+
+
+
+**Course**
+
+**Client-Server Architectures (5COSC022W) - University of Westminster**
 
