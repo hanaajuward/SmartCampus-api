@@ -21,20 +21,18 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class SensorReadingResource {
-    
+
     private final RoomService roomService = RoomService.getInstance();
-    private String sensorId;  // REMOVED 'final' keyword
-    
-    // NO-ARGUMENT CONSTRUCTOR (REQUIRED for JAX-RS)
-    public SensorReadingResource() {
-        // Default constructor
-    }
-    
-    // Constructor receives the sensor ID from the parent resource
+    private String sensorId;
+
+    // No-arg constructor required by JAX-RS
+    public SensorReadingResource() {}
+
+    // Constructor called by sub-resource locator in SensorResource
     public SensorReadingResource(String sensorId) {
         this.sensorId = sensorId;
     }
-    
+
     // GET /api/v1/sensors/{sensorId}/readings
     @GET
     public Response getAllReadings() {
@@ -43,11 +41,10 @@ public class SensorReadingResource {
                 .entity("{\"error\": \"Sensor not found with id: " + sensorId + "\"}")
                 .build();
         }
-        
         List<SensorReading> readings = roomService.getSensorReadings(sensorId);
         return Response.ok(readings).build();
     }
-    
+
     // POST /api/v1/sensors/{sensorId}/readings
     @POST
     public Response addReading(SensorReading reading) {
@@ -56,27 +53,21 @@ public class SensorReadingResource {
                 .entity("{\"error\": \"Sensor not found with id: " + sensorId + "\"}")
                 .build();
         }
-        
         if (reading.getValue() < 0) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity("{\"error\": \"Reading value cannot be negative\"}")
                 .build();
         }
-        
-        try {
-            SensorReading created = roomService.addSensorReading(sensorId, reading);
-            
-            return Response
-                .created(URI.create("/api/v1/sensors/" + sensorId + "/readings/" + created.getId()))
-                .entity(created)
-                .build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.NOT_FOUND)
-                .entity("{\"error\": \"" + e.getMessage() + "\"}")
-                .build();
-        }
+
+        // SensorUnavailableException will propagate to
+        // SensorUnavailableExceptionMapper → 403
+        SensorReading created = roomService.addSensorReading(sensorId, reading);
+        return Response
+            .created(URI.create("/api/v1/sensors/" + sensorId + "/readings/" + created.getId()))
+            .entity(created)
+            .build();
     }
-    
+
     // GET /api/v1/sensors/{sensorId}/readings/{readingId}
     @GET
     @Path("/{readingId}")
@@ -86,20 +77,17 @@ public class SensorReadingResource {
                 .entity("{\"error\": \"Sensor not found with id: " + sensorId + "\"}")
                 .build();
         }
-        
         List<SensorReading> readings = roomService.getSensorReadings(sensorId);
-        
         SensorReading found = readings.stream()
             .filter(r -> r.getId().equals(readingId))
             .findFirst()
             .orElse(null);
-        
+
         if (found == null) {
             return Response.status(Response.Status.NOT_FOUND)
                 .entity("{\"error\": \"Reading not found with id: " + readingId + "\"}")
                 .build();
         }
-        
         return Response.ok(found).build();
     }
 }

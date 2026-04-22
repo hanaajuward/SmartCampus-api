@@ -21,15 +21,15 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class RoomResource {
-    
+
     private final RoomService roomService = RoomService.getInstance();
-    
+
     @GET
     public Response getAllRooms() {
         List<Room> rooms = roomService.getAllRooms();
         return Response.ok(rooms).build();
     }
-    
+
     @POST
     public Response createRoom(Room room) {
         Room created = roomService.createRoom(room);
@@ -38,7 +38,7 @@ public class RoomResource {
             .entity(created)
             .build();
     }
-    
+
     @GET
     @Path("/{roomId}")
     public Response getRoom(@PathParam("roomId") String roomId) {
@@ -50,7 +50,7 @@ public class RoomResource {
         }
         return Response.ok(room).build();
     }
-    
+
     @DELETE
     @Path("/{roomId}")
     public Response deleteRoom(@PathParam("roomId") String roomId) {
@@ -60,13 +60,7 @@ public class RoomResource {
                 .entity("{\"error\": \"Room not found\"}")
                 .build();
         }
-        
-        if (roomService.hasActiveSensors(roomId)) {
-            return Response.status(Response.Status.CONFLICT)
-                .entity("{\"error\": \"Cannot delete room: active sensors still assigned\"}")
-                .build();
-        }
-        
+        // RoomNotEmptyException will propagate to RoomNotEmptyExceptionMapper → 409
         roomService.deleteRoom(roomId);
         return Response.noContent().build();
     }
