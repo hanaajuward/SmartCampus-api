@@ -1,6 +1,6 @@
 # Smart Campus API
 
-> **Module:** 5COSC022W Client-Server Architectures — University of Westminster  
+> **Module:** 5COSC022W Client-Server Architectures - University of Westminster  
 > **Author:** Hanaa Ajuward  
 > **Technology:** JAX-RS (Jersey 2.32) · Java 17 · Apache Tomcat 9.0 · Maven
 
@@ -19,7 +19,7 @@ CLIENT (Postman / curl)
 FILTER LAYER        - LoggingFilter logs every request and response
         |
         v
-RESOURCE LAYER      - DiscoveryResource, RoomResource, SensorResource, SensorReadingResource
+RESOURCE LAYER      - DiscoveryResource, SensorRoom, SensorResource, SensorReadingResource
         |                 Handle HTTP routing, parse input, build responses
         v
 SERVICE LAYER       - RoomService (Singleton)
@@ -205,7 +205,7 @@ SmartCampusAPI/
     │   └── SensorReading.java              id, timestamp, value
     ├── resource/
     │   ├── DiscoveryResource.java          GET /api/v1/
-    │   ├── RoomResource.java               CRUD for /api/v1/rooms
+    │   ├── SensorRoom.java                 CRUD for /api/v1/rooms
     │   ├── SensorResource.java             CRUD + sub-resource locator
     │   └── SensorReadingResource.java      Sub-resource: /sensors/{id}/readings
     ├── service/
@@ -699,9 +699,9 @@ curl -X POST http://localhost:8080/api/v1/sensors \
 
 ### Part 1.1 - JAX-RS Resource Lifecycle and In-Memory Data Management
 
-By default, JAX-RS creates a **new instance of each resource class for every incoming HTTP request**. This is called the per-request lifecycle. Every time a client calls `GET /api/v1/rooms`, JAX-RS instantiates a brand new `RoomResource` object, handles the request, and then discards it. This means that any instance variables defined on a resource class are reset on every request - they cannot be used to store persistent data.
+By default, JAX-RS creates a **new instance of each resource class for every incoming HTTP request**. This is called the per-request lifecycle. Every time a client calls `GET /api/v1/rooms`, JAX-RS instantiates a brand new `SensorRoom` object, handles the request, and then discards it. This means that any instance variables defined on a resource class are reset on every request - they cannot be used to store persistent data.
 
-This has a critical consequence for in-memory data management. If `RoomResource` stored its own `HashMap<String, Room>` as an instance variable, that map would be created empty on every request and data would never survive between calls. To solve this, the project uses the **Singleton pattern** for both `RoomService` and `DataStore`. Each uses a private constructor and exposes a single shared instance through a static `getInstance()` method. Every resource class calls `RoomService.getInstance()` in its own constructor, so all requests — regardless of which thread handles them — read from and write to the exact same shared maps.
+This has a critical consequence for in-memory data management. If `SensorRoom` stored its own `HashMap<String, Room>` as an instance variable, that map would be created empty on every request and data would never survive between calls. To solve this, the project uses the **Singleton pattern** for both `RoomService` and `DataStore`. Each uses a private constructor and exposes a single shared instance through a static `getInstance()` method. Every resource class calls `RoomService.getInstance()` in its own constructor, so all requests — regardless of which thread handles them — read from and write to the exact same shared maps.
 
 Thread safety is addressed by using `ConcurrentHashMap` rather than a plain `HashMap`. Apache Tomcat processes multiple HTTP requests concurrently using a thread pool. A regular `HashMap` is not thread-safe and can produce corrupted data or lost writes when accessed simultaneously from multiple threads. `ConcurrentHashMap` provides thread-safe reads and fine-grained locking on individual write operations, preventing race conditions without the performance cost of locking the entire map on every access.
 

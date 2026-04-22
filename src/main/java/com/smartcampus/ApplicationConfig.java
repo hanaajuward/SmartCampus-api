@@ -23,7 +23,7 @@ public class ApplicationConfig extends Application {
         Set<Class<?>> resources = new HashSet<>();
         
         resources.add(com.smartcampus.resource.DiscoveryResource.class);
-        resources.add(com.smartcampus.resource.RoomResource.class);  
+        resources.add(com.smartcampus.resource.SensorRoom.class);  
         resources.add(com.smartcampus.resource.SensorResource.class);
         
         // Exception Mappers

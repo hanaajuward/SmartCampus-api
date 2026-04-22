@@ -39,7 +39,7 @@ public class DataStore {
         // Link sensors to rooms in the room's sensorIds list
         room1.addSensorId("SENSOR-CO2-001");
         room1.addSensorId("SENSOR-TEMP-001");
-        room3.addSensorId("SENSOR-CO2-003"); // FIX: was missing, caused ENG-202 deletion to not trigger 409
+        room3.addSensorId("SENSOR-CO2-003"); 
 
         rooms.put("LIB-301", room1);
         rooms.put("CS-101", room2);

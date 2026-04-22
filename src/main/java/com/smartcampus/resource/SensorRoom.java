@@ -20,7 +20,7 @@ import java.util.List;
 @Path("/rooms")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class RoomResource {
+public class SensorRoom {
 
     private final RoomService roomService = RoomService.getInstance();
 
