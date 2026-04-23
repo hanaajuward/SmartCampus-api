@@ -701,14 +701,15 @@ curl -X POST http://localhost:8080/api/v1/sensors \
 
 By default, JAX-RS creates a new instance of each resource class for every incoming HTTP request. This means instance variables on resource classes are reset on every request and cannot hold persistent data.
 To solve this, the project uses the Singleton pattern for both `RoomService` and `DataStore`. Each exposes a single shared instance via `getInstance()`, so all requests read from and write to the same maps regardless of which thread handles them.
-Thread safety is handled by `ConcurrentHashMap` instead of a plain `HashMap`. Since Tomcat processes requests concurrently, a regular HashMap risks data corruption from simultaneous writes. `ConcurrentHashMap` provides thread-safe operations without locking the entire map on every access.
+Thread safety is handled by `ConcurrentHashMap` instead of a plain `HashMap`. Since Tomcat processes requests concurrently, a regular HashMap can be corrupted by simultaneous writes. `ConcurrentHashMap` provides thread-safe operations without locking the entire map on every access.
 
 ---
 
 ### Part 1.2 - HATEOAS and the Value of Hypermedia
 
 HATEOAS (Hypermedia As The Engine Of Application State) means including navigational links inside API responses rather than requiring clients to hardcode URLs from documentation.
-The discovery endpoint at `GET /api/v1/` demonstrates this by returning links to `/api/v1/rooms` and `/api/v1/sensors`. This benefits developers in three ways: clients do not need to hardcode URLs so they survive server-side URL changes automatically; the API becomes self-documenting since all entry points are discoverable from one request; and it reduces coupling between client and server. Static documentation goes out of date — HATEOAS responses are always accurate because they come from the live server.
+The discovery endpoint at `GET /api/v1/` demonstrates this by returning links to `/api/v1/rooms` and `/api/v1/sensors`. This benefits developers in three ways: clients do not need to hardcode URLs so they survive server-side URL changes automatically; the API becomes self-documenting since all entry points are discoverable from one request; and it reduces coupling between client and server. Static documentation goes out of date, HATEOAS responses are always accurate because they come from the live server.
+
 ---
 
 ### Part 2.1 - Implications of Returning IDs vs Full Room Objects
@@ -720,7 +721,7 @@ Returning full room objects (as this API does) costs slightly more bandwidth but
 
 ### Part 2.2 - DELETE Idempotency
 
-The DELETE operation is idempotent in this implementation. The first `DELETE /api/v1/rooms/CS-101` deletes the room and returns 204 No Content. Every subsequent identical request returns a 404 Not Found error. The server state is the same after both calls — CS-101 does not exist either way. Idempotency is defined by server state, not response codes, so this is correct behaviour. A client can safely retry a DELETE without risk of unintended side effects.
+The DELETE operation is idempotent in this implementation. The first `DELETE /api/v1/rooms/CS-101` deletes the room and returns 204 No Content. Every subsequent identical request returns a 404 Not Found error. The server state is the same after both calls; CS-101 does not exist either way. Idempotency is defined by server state, not response codes, so this is correct behaviour. A client can safely retry a DELETE without risk of unintended side effects.
 
 ---
 
@@ -758,7 +759,7 @@ A **422 Unprocessable Entity** indicates that the request URL is correct and the
 
 ### Part 5.4 - Security Risks of Exposing Stack Traces
 
-Raw stack traces expose four categories of sensitive information. Class names and package structure reveal the internal architecture without needing source code access. Library names and versions allow attackers to search CVE databases for known vulnerabilities in those exact versions. Method names and line numbers give a precise roadmap of the codebase useful for crafting targeted inputs. Business logic flow from the call stack reveals how requests are processed and where weak points may exist.
+Raw stack traces expose four categories of sensitive information. Class names and package structure reveal the internal architecture without needing source code access. Library names and versions allow attackers to search CVE databases for known vulnerabilities in those exact versions. Method names and line numbers give a precise roadmap of the codebase, useful for crafting targeted inputs. Business logic flows from the call stack, revealing how requests are processed and where weak points may exist.
 
 This project's `GlobalExceptionMapper` logs the full trace server-side only, returning just "An unexpected error occurred" to the client, maintaining full observability for developers without leaking exploitable information externally.
 
