@@ -746,7 +746,7 @@ With the locator, `SensorResource` delegates everything under `/readings` to `Se
 
 ---
 
-### Part 5.2 — HTTP 422 vs 404 for a Missing Referenced Resource
+### Part 5.2 - HTTP 422 vs 404 for a Missing Referenced Resource
 
 The distinction between 404 and 422 comes down to **what is missing**.
 
@@ -756,7 +756,7 @@ A **422 Unprocessable Entity** indicates that the request URL is correct and the
 
 ---
 
-### Part 5.4 — Security Risks of Exposing Stack Traces
+### Part 5.4 - Security Risks of Exposing Stack Traces
 
 Raw stack traces expose four categories of sensitive information. Class names and package structure reveal the internal architecture without needing source code access. Library names and versions allow attackers to search CVE databases for known vulnerabilities in those exact versions. Method names and line numbers give a precise roadmap of the codebase useful for crafting targeted inputs. Business logic flow from the call stack reveals how requests are processed and where weak points may exist.
 
@@ -764,7 +764,7 @@ This project's `GlobalExceptionMapper` logs the full trace server-side only, ret
 
 ---
 
-### Part 5.5 — JAX-RS Filters vs Per-Method Logging
+### Part 5.5 - JAX-RS Filters vs Per-Method Logging
 
 Manually inserting `Logger.info()` into every resource method has three problems: it is duplicative (the same boilerplate repeated everywhere, hard to update); incomplete (framework-level rejections like 415 errors never reach resource methods and so are never logged); and it mixes concerns (logging entangled with business logic makes methods harder to read and test).
 `LoggingFilter` solves all three at once; written once, applied automatically to every request and response including framework rejections, and completely invisible to resource methods. This is the standard Aspect-Oriented Programming approach to cross-cutting concerns in production web services.
